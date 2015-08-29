@@ -31,6 +31,10 @@ var App = React.createClass({
   }
 });
 
+var sum = function(a,b) {
+  return a + b;
+}
+
 // define all routes for router
 var routes = (
   <Route handler={App}>
@@ -44,3 +48,6 @@ var routes = (
 Router.run(routes, function(Handler) {
   React.render(<Handler/>, document.getElementById('app'));
 });
+
+module.exports = sum;
+
