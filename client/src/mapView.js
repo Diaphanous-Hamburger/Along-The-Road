@@ -26,9 +26,11 @@ var MapView = React.createClass({
     var end = this.getLatLong(destination);
 
     var map = this.initializeMap(start);
+    this.setState({
+      map: map
+    });
     this.calcRoute(start, end, map);
   },
-
   // turns a lat/long string into a google maps LatLong Object
   getLatLong (location) {
     return new google.maps.LatLng(location.split(',')[0], location.split(',')[1]);
@@ -65,11 +67,11 @@ var MapView = React.createClass({
       destination:end,
       travelMode: google.maps.TravelMode.DRIVING,
       provideRouteAlternatives: true,
-    };
+    }; //request
 
     // make a directios request to the maps API
     directionsService.route(request, function (response, status) {
-      if (status == google.maps.DirectionsStatus.OK) {
+      if (status == google.maps.DirectionsStatus.OK) { //.OK indicates the response contains a valid DirectionsResult.
         console.log(response);
         var routes = [];
         var colors = ['blue', 'red', 'green'];
@@ -82,6 +84,7 @@ var MapView = React.createClass({
         }
 
         for (var i = 0, len = response.routes.length; i < len; i++) {
+          console.log("Showing path info: Route"+i, response.routes[i].overview_path);
           // create a polyline for each suggested route
           var polyLine = new google.maps.Polyline({
             path: response.routes[i].overview_path,
@@ -89,14 +92,18 @@ var MapView = React.createClass({
             map
           });
 
+          polyLine.path = response.routes[i].overview_path; //save path info for use with routing boxes, used in this.updateRoutingBoxes()
+          
           polyLine.setOptions(defaultOptions);
+
 
           // on the initial load make the first suggestion active
           if (i === 0) {
             component.setState({
-              currentRoute: polyLine
+              currentRoute: polyLine, 
+              // currentPath: response.routes[i].overview_path //test
             });
-          }
+          } //if
 
           polyLine.addListener('click', function() {
             // revert active route
@@ -104,7 +111,9 @@ var MapView = React.createClass({
               component.state.currentRoute.setOptions(defaultOptions);
             }
             // update new route to be the clicked polyline
-            component.setState({ currentRoute: this })
+            component.setState({ 
+              currentRoute: this 
+            }); 
           });
 
           // save the distance and duration of each route for display
@@ -114,17 +123,58 @@ var MapView = React.createClass({
             distance: response.routes[i].legs[0].distance.text,
             duration: response.routes[i].legs[0].duration.text,
           });
-        }
+        } //for(each route)
 
         component.setState({
           routes
         });
-      }
-    });
-  },
 
+        /**** Routing Box ****/
+        component.updateRoutingBoxes();
+      } // if
+    }); //directionsService.route callback
+  }, //calcRoutes()
+  updateRoutingBoxes () {
+    // get routing box info from good api
+    console.log("TEST inside updateRoutingBoxes() currentRoute = ", this.state.currentRoute.path);
+
+    var directionService = new google.maps.DirectionsService();
+    var routeBoxer = new RouteBoxer();
+    var distance = 5; // km
+
+    var currentRoute = this.state.currentRoute;
+
+    var boxes = routeBoxer.box(currentRoute.path, distance);
+    this.drawBoxes(boxes);
+
+  },
+  // Draw the array of boxes as polylines on the map
+  drawBoxes (boxes) {
+    var boxpolys = new Array(boxes.length);
+    
+    for (var i = 0; i < boxes.length; i++) {
+      boxpolys[i] = new google.maps.Rectangle({
+        bounds: boxes[i],
+        fillOpacity: 0,
+        strokeOpacity: 1.0,
+        strokeColor: '#000000',
+        strokeWeight: 1,
+        map: this.state.map
+      });
+    } //for
+
+  }, // drawBoxes()
+  // Clear boxes currently on the map
+  // function clearBoxes() {
+  //   if (boxpolys != null) {
+  //     for (var i = 0; i < boxpolys.length; i++) {
+  //       boxpolys[i].setMap(null);
+  //     }
+  //   }
+  //   boxpolys = null;
+  // }, // clearBoxes()
   render () {
-    // update display of acitve route
+    // update display of active route
     if (this.state.currentRoute) {
       this.state.currentRoute.setOptions({
         zIndex: 2,
