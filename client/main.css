@@ -86,11 +86,6 @@ then you get 114 height on the title
   height:100%;
 }
 .content{
-  background-image: url("/img/forest.jpeg");
-  background-position: 50% 50%;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-size: cover;
   height: 80%;
 }
 
@@ -99,6 +94,14 @@ then you get 114 height on the title
 ******* HomeView ******
 ***********************
 ***********************/
+
+.home-view-content{
+  background-image: url("/img/forest.jpeg");
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+}
 
 /********
 ** Homeview: Custom forms for homepage
@@ -153,7 +156,7 @@ then you get 114 height on the title
   /*overflow: scroll;*/
 }
 .list-container{
-  height:90%;
+  height:100%;
   width:100%;
   overflow:scroll;
   z-index: 999;
@@ -208,7 +211,7 @@ then you get 114 height on the title
 ***********************
 ***********************/
 
-.tool-bar-container{
+/*.tool-bar-container{
   margin:0;
   padding-left:10px;
   background-color: white;
@@ -217,13 +220,34 @@ then you get 114 height on the title
 .drop-down{
   margin-left:28px;
   padding-top: 10px;
-}
+}*/
 /**********************
 ***********************
 ******* ListView *******
 ***********************
 ***********************/
 
+.filters {
+  text-align: right;
+}
+
+.filter {
+  display: inline-block;
+  padding: 2px 5px;
+}
+
+.price-filter button {
+  width: 50px;
+}
+
+.btn:focus,.btn:active {
+   outline: none !important;
+   background-color: blue !important; /*not working yet*/
+}
+
+.btn.active {
+  background-color: LightCoral;
+}
 
 
 /**********************
@@ -262,5 +286,9 @@ then you get 114 height on the title
 
 .closed {
   color: red;
+}
+
+.clickable:hover {
+  cursor: pointer;
 }
 

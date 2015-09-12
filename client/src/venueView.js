@@ -50,9 +50,10 @@ var VenueView = React.createClass({
     );
 
     var msgToDollarSigns = {
-      Cheap: "$",
-      Moderate: "$$",
-      Expensive: "$$$"
+      "Cheap": "$",
+      "Moderate": "$$",
+      "Expensive": "$$$",
+      "Very Expensive": "$$$$"
     };
 
 
@@ -63,7 +64,7 @@ var VenueView = React.createClass({
     var totalDistanceText = Math.round(totalDistance/1000*.621*10)/10 + " mi";
 
     return (
-      <Card className="card" onClick={this.props.openFourSquare}>
+      <Card className="card">
         <div className="col-xs-2 avatar" >
           {avatar}
         </div>
@@ -77,6 +78,7 @@ var VenueView = React.createClass({
           <span className="rating"> {"\uD83C\uDFC6 " + ratingText} </span>
           <span className="distance"> {totalDistanceText} </span>
           <span className="price"> {priceText} </span>
+          <span className="glyphicon glyphicon-info-sign clickable" onClick={this.props.openFourSquare}></span>
         </div>
       </Card>
     );

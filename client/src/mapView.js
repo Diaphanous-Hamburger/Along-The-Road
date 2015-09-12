@@ -333,14 +333,16 @@ var MapView = React.createClass({
       });
     };
 
+    
+    // <div className='tool-bar-container'>
+    //   <ToolView/> {/* ToolView */}
+    // </div>
+
+
     return (
       <div className='container-fluid' style={{'height': '100%'}} >
         <div className='row' style={{'height': '100%', 'width': '100%'}}>
           <div className='col-sm-5 left-container'>
-
-            <div className='tool-bar-container'>
-              <ToolView/> {/* ToolView */}
-            </div>
 
             <div className='list-container'>
                 <ListView

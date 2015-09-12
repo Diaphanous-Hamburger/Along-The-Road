@@ -70,7 +70,7 @@ var HomeView = React.createClass({
     };
 
     return (
-      <div className='container-fluid'>
+      <div className='container-fluid home-view-content'>
         <br/><br/>
         <div className = 'row centered'>
           <div className="input-group">
