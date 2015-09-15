@@ -16,45 +16,40 @@ var ListView = React.createClass({
   },
 
   defaultOptions: {
+    colors: {
+      default: '#FFF',
+      hover: '#BBAA9C'
 
-    
+    }
   },
-  componentDidMount () {
-    console.log("listView -----> componentDidMount()");
-    // $(document).$(".card").on('hover', function(e){
-    // });
 
+  componentDidMount () {
+    // console.log("listView -----> componentDidMount()");
+
+    /*******  INIT LISTVIEW UX ********/
     $(document).on('mouseenter', '.card', function(e) {
       // console.log("*********mouseenter. e=", e);
-      $(e.currentTarget).css({'background-color': 'pink'});
+      var {hoverColor, defaultColor} = this.defaultOptions.colors;
+
+      $(e.currentTarget).css({'background-color': hoverColor});
 
       var venue_id = $(e.currentTarget).attr('id');
+
       //update map markers to show active venue
       Actions.selectVenue(venue_id);
     });
+
     $(document).on('mouseleave', '.card', function(e) {
-      $(e.currentTarget).css({'background-color': 'white'})
-      // console.log("*********mouseenter. e=", e);
+      $(e.currentTarget).css({'background-color': defaultColor})
     });
 
-    // $(document).on('mousein', '.card', function() {
-    //   console.log("*********HOvered");
-    // });
-  },
-
-  componentDidUpdate(prevProps, prevState) {
-    // if (this.props.currentRoute.wayPoints.length && !this.props.currentRoute.results.length && QueryStore.prevWaypoints()==21) {
-    //   this.queryFourSquare(1, 21);
-    // } 
-  },
-
-  //Gets the previous number of waypoints and the new number to be querried
-  // _onChange () {
-  //   var waypoints = QueryStore.getWaypoints();
-  //   // if (this.props.currentRoute.wayPoints.length && !this.props.currentRoute.results.length) {
-  //   this.queryFourSquare(waypoints);
-  //   // } 
-  // },
+    // deactivate marker when mouse leave the list-container
+    $(document).on('mouseleave', '.list-container', function(e) {
+      // $(e.currentTarget).css({'background-color': 'white'})
+      log('&&&&&&&&& right container entered')
+      Actions.selectVenue("");
+    });
+  }, //componentDidMount()
 
   render () {
     var component = this;

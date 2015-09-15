@@ -74,11 +74,20 @@ var MapView = React.createClass({
   },
 
   changePoppedMarker (){
+    var map = window.map;
+
     var newMarker = this.state.displayedMarkers[MapMarkerStore.getActiveVenue()];
     var prevMarker = this.state.displayedMarkers[MapMarkerStore.getPrevVenue()];
 
-    prevMarker.setAnimation(null);
-    newMarker.setAnimation(google.maps.Animation.BOUNCE);
+    if(newMarker){
+      // newMarker.setAnimation(google.maps.Animation.BOUNCE);
+      newMarker.infowindow.open(map, newMarker);
+    }
+
+    if(prevMarker){ //if a previous marker has been set
+      // prevMarker.setAnimation(null);
+      prevMarker.infowindow.close();
+    } //if
   }, //popMarker()
 
   // Print new markers ()
@@ -136,6 +145,8 @@ var MapView = React.createClass({
           "<a href="+ component.openDirections(venue) + " target='_blank'><div float='right'>Directions</div></a>" + "<br/>" +
           "<a href=" + component.openFourSquare(venue) + " target='_blank'><div float='right'>Details</div></a>"
         });
+
+        marker.infowindow = infowindow;
 
         var markerIsActive = false;
 
