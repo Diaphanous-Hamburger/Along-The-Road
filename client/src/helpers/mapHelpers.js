@@ -119,6 +119,11 @@ var getWayPoints = function(newRoute, radius) {
 
 } //getWayPoints()
 
+var openFourSquare = function (venue) {
+  var url = "https://foursquare.com/v/" + escape(venue.name) + "/" + venue.id;
+  console.log("TEST inside openFourSquare. url=" + url);
+  window.open(url);
+};
 
 module.exports = {
   getDistanceBetweenPoints,
@@ -127,5 +132,6 @@ module.exports = {
   initializeMap,
   initializeMarkers, 
   getWayPoints, 
-  getSearchRadius
+  getSearchRadius,
+  openFourSquare
 };

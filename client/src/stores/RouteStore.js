@@ -64,9 +64,6 @@ function addVenues(venue_wrappers, point){
     } 
 
     currentRoute.filteredVenues = getFilteredArr(); //NOTE: get back a filtered and sorted array
-    // console.log(allVenues);
-  /**************/
-  
 } //addVenues()
 
 

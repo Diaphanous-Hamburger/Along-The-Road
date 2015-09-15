@@ -20,8 +20,22 @@ var ListView = React.createClass({
     
   },
   componentDidMount () {
-    // console.log("listView -----> componentDidMount()");
+    console.log("listView -----> componentDidMount()");
+    // $(document).$(".card").on('hover', function(e){
+    // });
 
+    $(document).on('mouseenter', '.card', function(e) {
+      // console.log("*********mouseenter. e=", e);
+      $(e.currentTarget).css({'background-color': 'pink'})
+    });
+    $(document).on('mouseleave', '.card', function(e) {
+      $(e.currentTarget).css({'background-color': 'white'})
+      // console.log("*********mouseenter. e=", e);
+    });
+
+    // $(document).on('mousein', '.card', function() {
+    //   console.log("*********HOvered");
+    // });
   },
 
   componentDidUpdate(prevProps, prevState) {

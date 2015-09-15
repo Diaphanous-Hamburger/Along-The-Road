@@ -189,6 +189,19 @@ then you get 114 height on the title
   opacity: .7;
 }
 
+.next-container{
+  position: absolute;
+  background-color: pink;
+  bottom: 20px;
+  left: 20px;
+  background-color: #fff;
+  z-index: 9999;
+  opacity: .7;
+
+  width: 50px;
+  height: 50px;
+}
+
 .list-item{
   height: 38px;
 }
@@ -214,10 +227,14 @@ then you get 114 height on the title
   background-color: white;
 }
 
-.drop-down{
-  margin-left:28px;
-  padding-top: 10px;
-  display: inline;
+.dropdown{
+  /*margin-left:28px;*/
+  /*padding-top: 10px;*/
+  display: inline-block;
+}
+
+.dropdown li:hover{
+  cursor:pointer;
 }
 /**********************
 ***********************
@@ -245,6 +262,9 @@ then you get 114 height on the title
 }
 .card span {
   display: block;
+}
+.card:hover{
+  cursor:pointer;
 }
 
 .title {

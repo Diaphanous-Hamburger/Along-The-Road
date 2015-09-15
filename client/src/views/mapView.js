@@ -1,6 +1,7 @@
 /*** MapView ***/
 //NOTE: Mapview only renders the DOM once. From then on, it only renders inside the google map via api controls
 var React = require('react');
+var MapHelper = require('../helpers/mapHelpers')
 
 var MapView = React.createClass({
 
@@ -161,7 +162,7 @@ var MapView = React.createClass({
         }); //mouseout
 
         google.maps.event.addListener(marker, 'dblclick', function() {
-          component.openFourSquare(venue); //load new page
+          MapHelper.openFourSquare(venue); //load new page
           
         });
 

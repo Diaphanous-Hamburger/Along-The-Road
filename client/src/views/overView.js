@@ -248,12 +248,16 @@ var overView = React.createClass({
         <div className = 'row' style={{'height': '100%', 'width': '100%'}}>
           <div className = 'col-sm-5 left-container'>
 
-            <div className = 'tool-bar-container'>
+            <div className = 'tool-bar-container' style={{"backgroundColor": "purple"}} >
               <ToolView
-                loadMore = {this.loadMore}/> {/* ToolView */}
+                loadMore = {this.loadMore}
+              /> {/* ToolView */}
             </div>
 
-            <div className = 'list-container'>
+            <div
+              className = 'list-container'
+              /*onScroll={function(){console.log("TEST $$$$$$$$$ onScroll()")}}*/
+            > {/* div.list-container */}
                 <ListView
                   // currentRoute={this.state.currentRoute}
                   currentRoute = {this.state.currentRoute}
@@ -281,6 +285,7 @@ var overView = React.createClass({
                 changeCurrentRoute={this.changeCurrentRoute}
               /> {/* RouteDetailView */}
             </div> {/* row */}
+
 
           </div> {/* col-sm-8 */}
 
