@@ -17,25 +17,23 @@ var ListView = React.createClass({
 
   defaultOptions: {
     colors: {
-      default: '#FFF',
-      hover: '#BBAA9C'
+      defaultColor: '#FFF',
+      hoverColor: '#ddd'
 
     }
   },
 
   componentDidMount () {
     // console.log("listView -----> componentDidMount()");
-
+    
     /*******  INIT LISTVIEW UX ********/
+    var {hoverColor, defaultColor} = this.defaultOptions.colors;
+    
     $(document).on('mouseenter', '.card', function(e) {
-      // console.log("*********mouseenter. e=", e);
-      var {hoverColor, defaultColor} = this.defaultOptions.colors;
-
       $(e.currentTarget).css({'background-color': hoverColor});
 
-      var venue_id = $(e.currentTarget).attr('id');
-
       //update map markers to show active venue
+      var venue_id = $(e.currentTarget).attr('id');
       Actions.selectVenue(venue_id);
     });
 
@@ -45,10 +43,9 @@ var ListView = React.createClass({
 
     // deactivate marker when mouse leave the list-container
     $(document).on('mouseleave', '.list-container', function(e) {
-      // $(e.currentTarget).css({'background-color': 'white'})
-      log('&&&&&&&&& right container entered')
       Actions.selectVenue("");
     });
+
   }, //componentDidMount()
 
   render () {
@@ -69,12 +66,6 @@ var ListView = React.createClass({
       return null;
     } //if
 
-    // var listDetails = this.state.venues.map(function(venue, index) {
-    //   return (
-    //     <VenueView venue={venue}/>
-    //   )
-    // });
-    
   } //render()
 });
 
