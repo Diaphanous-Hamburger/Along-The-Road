@@ -1,8 +1,8 @@
 /*** MapView ***/
 //NOTE: Mapview only renders the DOM once. From then on, it only renders inside the google map via api controls
 var React = require('react');
-var MapHelper = require('../helpers/mapHelpers')
-
+var MapHelper = require('../helpers/mapHelpers');
+var MapMarkerStore = require('../stores/MapMarkerStore');
 var MapView = React.createClass({
 
   propTypes: {
@@ -21,7 +21,7 @@ var MapView = React.createClass({
   componentDidMount () {
     // console.log("MapView ---> inside componentDidMount");
     
-    // QueryStore.addChangeListener(this._onChange)
+    MapMarkerStore.addChangeListener(this._onChange)
 
   },
 
@@ -56,9 +56,9 @@ var MapView = React.createClass({
 
   //Gets the previous number of waypoints and the new number to be querried
   _onChange () {
-    // this.clearMapMarkers(); 
-    // this.updateMapMarkers(); //newVenuesArr
+    this.changePoppedMarker();
   },
+
 
   openFourSquare: function (venue) {
     var url = "https://foursquare.com/v/"+escape(venue.name)+"/"+venue.id;
@@ -72,6 +72,14 @@ var MapView = React.createClass({
     return url;
     // window.open(url);
   },
+
+  changePoppedMarker (){
+    var newMarker = this.state.displayedMarkers[MapMarkerStore.getActiveVenue()];
+    var prevMarker = this.state.displayedMarkers[MapMarkerStore.getPrevVenue()];
+
+    prevMarker.setAnimation(null);
+    newMarker.setAnimation(google.maps.Animation.BOUNCE);
+  }, //popMarker()
 
   // Print new markers ()
   updateMapMarkers: function(newVenuesArr){

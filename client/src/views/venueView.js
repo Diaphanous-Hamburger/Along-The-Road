@@ -44,8 +44,7 @@ var VenueView = React.createClass({
   ,
 
   render () {
-    var {featuredPhotos, name, contact, hours, categories, location, menu, price, rating, ratingColor, stats, url, totalDistance} = this.props.venue;
-
+    var {featuredPhotos, name, contact, hours, categories, location, menu, price, rating, ratingColor, stats, url, totalDistance, id} = this.props.venue;
     if (categories) {
       var categoryList = categories.map(function(category, index) {
         return category.shortName;
@@ -78,7 +77,11 @@ var VenueView = React.createClass({
     var totalDistanceText = Math.round(totalDistance/1000*.621*10)/10 + " mi";
 
     return (
-      <Card className="card" >
+      <Card className="card"
+          id = {id}
+/*        onClick={function(e){console.log("Card clicked ele=", e.target);}}*/
+/*        onMouseOver={function(e){$(e.target).css({'background-color': 'pink'})}}*/
+      >{/*Card*/}
         <div className="col-xs-2 avatar" >
           {avatar}
         </div>

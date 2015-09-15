@@ -67,6 +67,13 @@ var Actions = {
       index: index
     });
   },
+  selectVenue: function(venue_id) {
+    console.log("Actions ----> selectRoute")
+    AppDispatcher.dispatch({
+      actionType: Constants.SELECT_VENUE,
+      venue_id: venue_id
+    });
+  },
   addWaypoints: function(wayPoints){
     AppDispatcher.dispatch({
       actionType: Constants.ADD_WAYPOINTS,

@@ -26,7 +26,11 @@ var ListView = React.createClass({
 
     $(document).on('mouseenter', '.card', function(e) {
       // console.log("*********mouseenter. e=", e);
-      $(e.currentTarget).css({'background-color': 'pink'})
+      $(e.currentTarget).css({'background-color': 'pink'});
+
+      var venue_id = $(e.currentTarget).attr('id');
+      //update map markers to show active venue
+      Actions.selectVenue(venue_id);
     });
     $(document).on('mouseleave', '.card', function(e) {
       $(e.currentTarget).css({'background-color': 'white'})
