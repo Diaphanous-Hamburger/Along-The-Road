@@ -229,7 +229,6 @@ var overView = React.createClass({
         url: fourSquare_url + ll + category_url + radius_url + limit_url + photos_url + distance_url,
         method: "GET",
         success: function(data){
-          log("################# foursquare success");
           count--;
           var point = this; // waypoint used for query, bound to this for for callback
           var venue_wrappers = data.response.groups[0].items; //extract venues array from data

@@ -34,14 +34,17 @@ var Actions = {
     });
   },
 
-  // updateVenueFilters: function(filterObj){
-  //   AppDispatcher.dispatch({
-  //     actionType: Constants.UPDATE_VENUE_FILTERS,
-  //     filterObj: filterObj
-  //   });
-  // },
+  updateVenueFilters: function(filterArr){
+    console.log("Actions ----> updateVenueFilters")
+
+    AppDispatcher.dispatch({
+      actionType: Constants.UPDATE_VENUE_FILTERS,
+      filterArr
+    });
+  },
 
   priceFilter: function(tier){
+    console.log("Actions ----> priceFilter")
     AppDispatcher.dispatch({
       actionType: Constants.PRICE_FILTER,
       tier: tier
@@ -75,7 +78,7 @@ var Actions = {
     });
   },
   selectVenue: function(venue_id) {
-    console.log("Actions ----> selectRoute")
+    // console.log("Actions ----> selectVenue")
     AppDispatcher.dispatch({
       actionType: Constants.SELECT_VENUE,
       venue_id: venue_id

@@ -36,7 +36,8 @@ var ToolView = React.createClass({
   getInitialState (){
     return {
       // venuefilters: []
-      colors: []
+      colors: [], 
+      filters: []
     }
   },
 
@@ -55,24 +56,27 @@ var ToolView = React.createClass({
 
 
       // </div>
-  updateFilters: function (colors) {
-    // Actions.updateVenueFilters();
-    this.setState({ colors: colors });
+  updateFilters: function (filters) {
+    Actions.updateVenueFilters(filters);
+    log("updateFilters, filters = ", filters);
+
+    this.setState({ filters: filters });
+
   },
 
   render () {
     return (
       <div style={{"backgroundColor": 'pink'}}>
         <SelectBox
-            label = "By Price"
+            label = "Set Filters"
             className = ''
             onChange = {this.updateFilters}
             value = {this.state.filters}
             multiple = {true}
         >{/* SelectBox */}
-          <option onClick={function(){Actions.priceFilter(1)}} key='red' value='price1'> $ </option>
-          <option onClick={function(){Actions.priceFilter(2)}} key='blue' value='price2'> $$ </option>
-          <option onClick={function(){Actions.priceFilter(3)}} key='green' value='price3'> $$$ </option>
+          <option value='price1'> $ </option>
+          <option value='price2'> $$ </option>
+          <option value='price3'> $$$ </option>
           
         </SelectBox>
 

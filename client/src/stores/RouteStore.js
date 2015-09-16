@@ -11,14 +11,16 @@ var CHANGE_EVENT = 'change';
 
 var routes = []; //Stores the last waypoint searched in for that route
 var currentRoute = 0;
-var venueFilters = {
-  ratingFilter: 7, //default to seven and above
-  // priceFilter: -1,  
-  price1: false, 
-  price2: false,
-  price3: false,
-  openNowFilter: false
-};
+// var venueFilters = {
+//   ratingFilter: 7, //default to seven and above
+//   // priceFilter: -1,  
+//   price1: false, 
+//   price2: false,
+//   price3: false,
+//   openNowFilter: false
+// };
+
+var filterArr = [];
 
 // var venueFilters = {}
 
@@ -81,34 +83,52 @@ function setCurrentRoute (index) {
 function getFilteredArr () {    
   var filteredVenues = [];
   var allVenues = currentRoute.allVenues;
-  // console.log("$$$$$$$$$$$$ getFilteredArr &&&&&& allvenues = ", allVenues)
-  var {ratingFilter, price1, price2, price3, openNowFilter} = venueFilters;
+  // var {ratingFilter, priceFilter, price1, price2, price3, openNowFilter} = venueFilters;
+
+  var price1 = filterArr.indexOf('price1')!==-1 ? true : false;
+  var price2 = filterArr.indexOf('price2')!==-1 ? true : false;
+  var price3 = filterArr.indexOf('price3')!==-1 ? true : false;
+  var openNowFilter = filterArr.indexOf('openNowFilter')!==-1 ? true : false;
+
+  console.log("$$$$$$$$$$$$ getFilteredArr &&&&&& price1 = "+price1)
 
   for(var id in allVenues){
     var venue = allVenues[id];
     var valid = true;
 
-    //Ratings
-    if(ratingFilter !==-1 ){
-      if(!venue.rating){
-        valid = false;
-      } else if (venue.rating < ratingFilter){
-        valid = false;
-      }
-    }
+    // /****** RATING ******/
+    // if(ratingFilter !==-1 ){
+    //   if(!venue.rating){
+    //     valid = false;
+    //   } else if (venue.rating < ratingFilter){
+    //     valid = false;
+    //   }
+    // } //if(rating)
 
+
+    /****** PRICE ******/
     // show all if all price filters are false
     if(price1 || price2 || price3){
-      if(venue.price.tier === 1  && !price1){
+      log("%%%%%%%%%%% inside filter logic")
+      if(!venue.price) { //if no price rating return false
         valid = false;
-        
-      }else if(venue.price.tier === 2  && !price2){
+      } else if (!(venue.price.tier)){ //
         valid = false;
+      } else{
 
-      }else if(venue.price.tier === 3  && !price3){
-        valid = false;
-      }
-    }
+        if(venue.price.tier === 1  && !price1){
+          valid = false;
+
+        }else if(venue.price.tier === 2  && !price2){
+          valid = false;
+
+        }else if(venue.price.tier === 3  && !price3){
+          valid = false;
+        }//if
+
+      }//if
+      
+    } //if
     // if(priceFilter !== -1){
     //   if(!venue.price) { //if no price rating return false
     //     valid = false;
@@ -119,7 +139,7 @@ function getFilteredArr () {
     //   }
     // }
 
-
+    /****** OPEN NOW ******/
     //Open now filter
     if(openNowFilter){
       if(!venue.hours || !venue.hours.isOpen){
@@ -136,15 +156,10 @@ function getFilteredArr () {
   return filteredVenues;
 } //getFilteredArr()
 
+var updateFilters = function(newFilterArr){
+  filterArr = newFilterArr; 
 
-/*** LINUS ***/
-// function setCurrentRoute (index) {
-//   currentRoute = index;
-// }
-
-// function addWaypoints (waypoints) {
-//   routeData.push({waypoints: waypoints, index: 1});
-// }
+} //updateFilters()
 
 /*****************
 ******************
@@ -212,19 +227,28 @@ AppDispatcher.register(function(action) {
       Store.emitChange();
       break;
 
-    case Constants.PRICE_FILTER: 
-      _venueFilters.priceFilter = action.tier;
-      currentRoute.filteredVenues = getFilteredArr();
-      sortVenues();
-      Store.emitChange();
-      break;
-    case Constants.RATING_FILTER: 
-      _venueFilters.ratingFilter = action.minRating;
-      currentRoute.filteredVenues = getFilteredArr();
-      sortVenues();
-      Store.emitChange();
-      break;
+    // case Constants.PRICE_FILTER: 
+    //   venueFilters.priceFilter = action.tier;
+    //   currentRoute.filteredVenues = getFilteredArr();
+    //   sortVenues();
+    //   Store.emitChange();
+    //   break;
+    // case Constants.RATING_FILTER: 
+    //   venueFilters.ratingFilter = action.minRating;
+    //   currentRoute.filteredVenues = getFilteredArr();
+    //   sortVenues();
+    //   Store.emitChange();
+    //   break;
     
+    case Constants.UPDATE_VENUE_FILTERS:
+      log("inside RouteStore. newFilterArr =", action.filterArr);
+      updateFilters(action.filterArr)
+      currentRoute.filteredVenues = getFilteredArr();
+      // currentRoute.filteredVenues = action.venueFilters;
+      Store.emitChange();
+      
+      break;
+
     case Constants.OPEN_NOW_FILTER:
       _venueFilters.openNowFilter = !_venueFilters.openNowFilter; 
       currentRoute.filteredVenues = getFilteredArr();
@@ -243,13 +267,6 @@ AppDispatcher.register(function(action) {
       sortVenues();
       Store.emitChange();
       break;
-    // case Constants.UPDATE_VENUE_FILTERS:
-    //   // updateFilters(action.venueFilters)
-    //   currentRoute.filteredVenues = action.venueFilters;
-    //   sortVenues();
-    //   Store.emitChange();
-      
-    //   break;
 
 
     // case Constants.CLEAR_DATA:
