@@ -18,9 +18,9 @@ var ListView = React.createClass({
   },
 
   shouldComponentUpdate () {
-    return false;
+    // return false;
   },
-  
+
   defaultOptions: {
     colors: {
       defaultColor: '#FFF',
@@ -56,7 +56,7 @@ var ListView = React.createClass({
 
   }, //componentDidMount()
 
-  updateList() {
+  updateList() { 
     this.forceUpdate();
   },
   render () {

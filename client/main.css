@@ -236,6 +236,15 @@ then you get 114 height on the title
 .dropdown li:hover{
   cursor:pointer;
 }
+
+.filter-input{
+  padding: 15px;
+  display: inline-block;
+  border-radius: 30px;
+  height:45px;
+  width: 190px;
+  text-align: center;
+}
 /**********************
 ***********************
 ******* ListView *******

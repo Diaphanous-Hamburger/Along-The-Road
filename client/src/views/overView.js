@@ -83,8 +83,9 @@ var overView = React.createClass({
     RouteStore.addChangeListener(function(){
       var routes = RouteStore.getRoutes();
       var currentRoute = RouteStore.getCurrentRoute();
-      // var venueFilters = RouteStore.getFilters();
+      var filteredVenues = currentRoute.filteredVenues;
       
+      // console.log("RouteStore ********** filteredVenues = ", filteredVenues);
       //The only place we are going to set state
       this.setState({
         routes, 
