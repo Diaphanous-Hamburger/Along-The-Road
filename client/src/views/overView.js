@@ -17,8 +17,10 @@ var mui = require('material-ui');
 var ThemeManager = new mui.Styles.ThemeManager();
 var {Card, CardHeader, CardMedia, CardActions, CardText, Avatar, CardTitle} = mui;
 
-// var QueryStore = require('../stores/QueryStore');
 
+/***************
+****** FLUX *****
+****************/
 var Actions = require('../actions/Actions.js');
 var RouteStore = require('../stores/RouteStore');
 
@@ -32,7 +34,7 @@ var overView = React.createClass({
     return {
       routes: [],
       currentRoute: null, // current route in the form of a polyline object
-      // searchRadius: this.defaultOptions.radius
+      venueFilters: {} // current route in the form of a polyline object
     }
   },
 
@@ -81,12 +83,13 @@ var overView = React.createClass({
     RouteStore.addChangeListener(function(){
       var routes = RouteStore.getRoutes();
       var currentRoute = RouteStore.getCurrentRoute();
-      // console.log("$$$$$$$$$$$ RouteStore returned. currentRoute = ", currentRoute);
+      // var venueFilters = RouteStore.getFilters();
       
       //The only place we are going to set state
       this.setState({
         routes, 
-        currentRoute
+        currentRoute, 
+        // venueFilters
       });
 
     }.bind(this)); //update routes
@@ -114,7 +117,9 @@ var overView = React.createClass({
     
     // func: Asynchronously gets routes from google
     directionsService.route(request, function (response, status) {
+      log("$$$$$$$$$$$ Success");
       if (status == google.maps.DirectionsStatus.OK) { //.OK indicates the response contains a valid DirectionsResult.
+        // log("$$$$$$$$$$$ Success routes:", response.routes);
         var newRoutes = []; //empty array for storing route polylines
         var colors = component.defaultOptions.routePalette;
 
@@ -193,6 +198,7 @@ var overView = React.createClass({
   //save results to the current route and updates the parent (mapView)
   //re-render results onto the page by updating state variable.
   getFourSquare (wayPoints, queryIndex) {
+    // log("################# inside getFourSquare() wayPoints", wayPoints);
 
     // var index = currentRoute.queryIndex;
     // if(index<wayPoints.length){
@@ -209,7 +215,7 @@ var overView = React.createClass({
     // for(var i=index; i<max; i++){
     for(var i=0; i<wayPoints.length; i++){
       var point = wayPoints[i]; 
-      var ll = "&ll=" + point.G+"," + point.K;
+      var ll = "&ll=" + point.lat()+"," + point.lng();
       var radius_url = "&radius=" + this.state.currentRoute.searchRadius * 1000;
 
       //These two properties ensure that the data is only displayed once all of the requests have returned
@@ -223,6 +229,7 @@ var overView = React.createClass({
         url: fourSquare_url + ll + category_url + radius_url + limit_url + photos_url + distance_url,
         method: "GET",
         success: function(data){
+          log("################# foursquare success");
           count--;
           var point = this; // waypoint used for query, bound to this for for callback
           var venue_wrappers = data.response.groups[0].items; //extract venues array from data
@@ -263,6 +270,7 @@ var overView = React.createClass({
             <div className = 'tool-bar-container' style={{"backgroundColor": "purple"}} >
               <ToolView
                 loadMore = {this.loadMore}
+                /*venueFilters = {this.state.venueFilters}*/
               /> {/* ToolView */}
             </div>
 

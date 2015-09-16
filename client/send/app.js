@@ -23858,10 +23858,22 @@
 	      index: index
 	    });
 	  },
+	  selectVenue: function selectVenue(venue_id) {
+	    console.log("Actions ----> selectRoute");
+	    AppDispatcher.dispatch({
+	      actionType: Constants.SELECT_VENUE,
+	      venue_id: venue_id
+	    });
+	  },
 	  addWaypoints: function addWaypoints(wayPoints) {
 	    AppDispatcher.dispatch({
 	      actionType: Constants.ADD_WAYPOINTS,
 	      wayPoints: wayPoints
+	    });
+	  },
+	  updateList: function updateList() {
+	    AppDispatcher.dispatch({
+	      actionType: Constants.UPDATE_LIST
 	    });
 	  }
 
@@ -24196,19 +24208,21 @@
 	var keyMirror = __webpack_require__(203);
 
 	module.exports = keyMirror({
-			TODO_CREATE: null,
-			QUERY_WAYPOINTS: null,
-			ADD_VENUES: null,
-			SORT_VENUES: null,
-			PRICE_FILTER: null,
-			RATING_FILTER: null,
-			CLEAR_DATA: null,
-			OPEN_NOW_FILTER: null,
-			CLEAR_FILTER: null,
-			SELECT_ROUTE: null,
-			ADD_WAYPOINTS: null,
-			// NEW FUNCTIONS
-			UPDATE_ROUTES: null
+		TODO_CREATE: null,
+		QUERY_WAYPOINTS: null,
+		ADD_VENUES: null,
+		SORT_VENUES: null,
+		PRICE_FILTER: null,
+		RATING_FILTER: null,
+		CLEAR_DATA: null,
+		OPEN_NOW_FILTER: null,
+		CLEAR_FILTER: null,
+		SELECT_ROUTE: null,
+		SELECT_VENUE: null,
+		ADD_WAYPOINTS: null,
+		// NEW FUNCTIONS
+		UPDATE_ROUTES: null,
+		UPDATE_LIST: null
 
 	});
 
@@ -44915,11 +44929,11 @@
 
 	var React = __webpack_require__(1);
 	var MapView = __webpack_require__(361);
-	var RouteDetailView = __webpack_require__(362);
-	var ListView = __webpack_require__(363);
-	var ToolView = __webpack_require__(365);
+	var RouteDetailView = __webpack_require__(366);
+	var ListView = __webpack_require__(367);
+	var ToolView = __webpack_require__(370);
 
-	var MapHelpers = __webpack_require__(366);
+	var MapHelpers = __webpack_require__(362);
 
 	/***************
 	****** MUI *****
@@ -44937,7 +44951,7 @@
 	// var QueryStore = require('../stores/QueryStore');
 
 	var Actions = __webpack_require__(197);
-	var RouteStore = __webpack_require__(367);
+	var RouteStore = __webpack_require__(371);
 
 	var overView = React.createClass({
 	  displayName: 'overView',
@@ -45080,7 +45094,7 @@
 	  loadMore: function loadMore() {
 	    var queryIndex = this.state.currentRoute.queryIndex;
 	    var queries = this.state.currentRoute.wayPoints.slice(queryIndex, queryIndex + 20);
-	    this.getFourSquare(queries); //getFourSquare
+	    this.getFourSquare(queries, queryIndex); //getFourSquare
 	    this.state.currentRoute.queryIndex += 20;
 	  },
 
@@ -45105,7 +45119,7 @@
 	  //queries fourSquare api to get new results.
 	  //save results to the current route and updates the parent (mapView)
 	  //re-render results onto the page by updating state variable.
-	  getFourSquare: function getFourSquare(wayPoints) {
+	  getFourSquare: function getFourSquare(wayPoints, queryIndex) {
 
 	    // var index = currentRoute.queryIndex;
 	    // if(index<wayPoints.length){
@@ -45146,12 +45160,24 @@
 	          var point = this; // waypoint used for query, bound to this for for callback
 	          var venue_wrappers = data.response.groups[0].items; //extract venues array from data
 	          Actions.addVenues(venue_wrappers, point);
+	          //This is just to show the user something is loading
+	          if (queryIndex === 1 && count === wayPoints.length - 1) {
+	            Actions.sortVenues();
+	            Actions.updateList();
+	          }
+
+	          //This condition checks for if it is the last query
 	          if (count === 0) {
 	            Actions.sortVenues();
+	            Actions.updateList();
 	          }
 	        }).bind(point),
 	        error: function error(_error) {
 	          count--;
+	          if (count === 0) {
+	            Actions.sortVenues();
+	            Actions.updateList();
+	          }
 	          console.log("TEST -------> fourSquare error, error=", _error);
 	        }
 	      }); //ajax()
@@ -45171,14 +45197,19 @@
 	          { className: 'col-sm-5 left-container' },
 	          React.createElement(
 	            'div',
-	            { className: 'tool-bar-container' },
+	            { className: 'tool-bar-container', style: { "backgroundColor": "purple" } },
 	            React.createElement(ToolView, {
-	              loadMore: this.loadMore }),
+	              loadMore: this.loadMore
+	            }),
 	            ' '
 	          ),
 	          React.createElement(
 	            'div',
-	            { className: 'list-container' },
+	            {
+	              className: 'list-container'
+	              /*onScroll={function(){console.log("TEST $$$$$$$$$ onScroll()")}}*/
+	            },
+	            ' ',
 	            React.createElement(ListView,
 	            // currentRoute={this.state.currentRoute}
 	            { currentRoute: this.state.currentRoute,
@@ -45224,7 +45255,7 @@
 	});
 
 	module.exports = overView;
-	/* ToolView */ /* ListView*/ /* list-container */ /* col-sm-4 */ /* MapView */ /* row */ /* RouteDetailView */ /* row */ /* col-sm-8 */ /* row */
+	/* ToolView */ /* div.list-container */ /* ListView*/ /* list-container */ /* col-sm-4 */ /* MapView */ /* row */ /* RouteDetailView */ /* row */ /* col-sm-8 */ /* row */
 
 /***/ },
 /* 361 */
@@ -45232,12 +45263,13 @@
 
 	/*** MapView ***/
 	//NOTE: Mapview only renders the DOM once. From then on, it only renders inside the google map via api controls
-	"use strict";
+	'use strict';
 
 	var React = __webpack_require__(1);
-
+	var MapHelper = __webpack_require__(362);
+	var MapMarkerStore = __webpack_require__(363);
 	var MapView = React.createClass({
-	  displayName: "MapView",
+	  displayName: 'MapView',
 
 	  propTypes: {},
 
@@ -45251,8 +45283,7 @@
 	  componentDidMount: function componentDidMount() {
 	    // console.log("MapView ---> inside componentDidMount");
 
-	    // QueryStore.addChangeListener(this._onChange)
-
+	    MapMarkerStore.addChangeListener(this._onChange);
 	  },
 
 	  componentDidUpdate: function componentDidUpdate(prevProps, prevState) {
@@ -45287,8 +45318,7 @@
 
 	  //Gets the previous number of waypoints and the new number to be querried
 	  _onChange: function _onChange() {
-	    // this.clearMapMarkers();
-	    // this.updateMapMarkers(); //newVenuesArr
+	    this.changePoppedMarker();
 	  },
 
 	  openFourSquare: function openFourSquare(venue) {
@@ -45303,6 +45333,24 @@
 	    return url;
 	    // window.open(url);
 	  },
+
+	  changePoppedMarker: function changePoppedMarker() {
+	    var map = window.map;
+
+	    var newMarker = this.state.displayedMarkers[MapMarkerStore.getActiveVenue()];
+	    var prevMarker = this.state.displayedMarkers[MapMarkerStore.getPrevVenue()];
+
+	    if (newMarker) {
+	      // newMarker.setAnimation(google.maps.Animation.BOUNCE);
+	      newMarker.infowindow.open(map, newMarker);
+	    }
+
+	    if (prevMarker) {
+	      //if a previous marker has been set
+	      // prevMarker.setAnimation(null);
+	      prevMarker.infowindow.close();
+	    } //if
+	  }, //popMarker()
 
 	  // Print new markers ()
 	  updateMapMarkers: function updateMapMarkers(newVenuesArr) {
@@ -45358,6 +45406,8 @@
 	          content: '<img border="0" align="Left" src=' + venueImage + '  style="width: 80px; height: 80px">' + "<strong>" + venue.name + "</strong>" + "<br/> Rating: " + venue.rating + "<br/>" + "<a href=" + component.openDirections(venue) + " target='_blank'><div float='right'>Directions</div></a>" + "<br/>" + "<a href=" + component.openFourSquare(venue) + " target='_blank'><div float='right'>Details</div></a>"
 	        });
 
+	        marker.infowindow = infowindow;
+
 	        var markerIsActive = false;
 
 	        //create event listener to open info window
@@ -45391,7 +45441,7 @@
 	        }); //mouseout
 
 	        google.maps.event.addListener(marker, 'dblclick', function () {
-	          component.openFourSquare(venue); //load new page
+	          MapHelper.openFourSquare(venue); //load new page
 	        });
 
 	        //show map marker
@@ -45426,9 +45476,9 @@
 	    // });
 
 	    return React.createElement(
-	      "div",
-	      { id: "map" },
-	      "  "
+	      'div',
+	      { id: 'map' },
+	      '  '
 	    );
 	  }
 	});
@@ -45437,447 +45487,6 @@
 
 /***/ },
 /* 362 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/*
-	This view shows the details of the possible routes from origin to destination
-	*/
-
-	'use strict';
-
-	var React = __webpack_require__(1);
-
-	// Import MUI components (material-ui)
-	var mui = __webpack_require__(204);
-	var ThemeManager = new mui.Styles.ThemeManager();
-	var Paper = mui.Paper;
-	var Menu = mui.Menu;
-	var MenuItem = mui.MenuItem;
-	var List = mui.List;
-	var ListItem = mui.ListItem;
-
-	var RouteDetailView = React.createClass({
-	  displayName: 'RouteDetailView',
-
-	  childContextTypes: { // MUI: init
-	    muiTheme: React.PropTypes.object //connect MUI
-	  },
-	  getChildContext: function getChildContext() {
-	    // MUI: set theme
-	    return {
-	      muiTheme: ThemeManager.getCurrentTheme() //set MUI theme to default
-	    };
-	  },
-	  propTypes: {
-	    routes: React.PropTypes.array.isRequired,
-	    changeCurrentRoute: React.PropTypes.func.isRequired
-	  },
-
-	  render: function render() {
-	    var component = this;
-	    var routes = this.props.routes;
-	    var routeDetails = routes.map(function (route, index) {
-	      var colorCodedRouteInfo = React.createElement(
-	        'span',
-	        null,
-	        React.createElement('span', { className: 'glyphicon glyphicon-road', style: { color: route.color } }),
-	        " " + route.distance + " → " + route.duration
-	      );
-	      return React.createElement(ListItem, {
-	        primaryText: colorCodedRouteInfo,
-	        onClick: function () {
-	          component.props.changeCurrentRoute(routes[index]);
-	        },
-	        key: index,
-	        className: 'list-item' });
-	    });
-
-	    return React.createElement(
-	      'div',
-	      null,
-	      React.createElement(
-	        Paper,
-	        null,
-	        React.createElement(
-	          List,
-	          { subheader: 'Route Selector', className: 'route-list' },
-	          ' ',
-	          routeDetails,
-	          ' '
-	        )
-	      )
-	    );
-	  }
-	});
-
-	module.exports = RouteDetailView;
-
-/***/ },
-/* 363 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/*
-	ListView: This view shows the details of the possible routes from origin to destination
-	*/
-
-	'use strict';
-
-	var React = __webpack_require__(1);
-	var VenueView = __webpack_require__(364);
-
-	var Actions = __webpack_require__(197);
-	// var VenueStore = require('../stores/VenueStore');
-
-	var ListView = React.createClass({
-	  displayName: 'ListView',
-
-	  propTypes: {
-	    currentRoute: React.PropTypes.object.isRequired
-	  },
-
-	  defaultOptions: {},
-	  componentDidMount: function componentDidMount() {
-	    // console.log("listView -----> componentDidMount()");
-
-	  },
-
-	  componentDidUpdate: function componentDidUpdate(prevProps, prevState) {
-	    // if (this.props.currentRoute.wayPoints.length && !this.props.currentRoute.results.length && QueryStore.prevWaypoints()==21) {
-	    //   this.queryFourSquare(1, 21);
-	    // }
-	  },
-
-	  //Gets the previous number of waypoints and the new number to be querried
-	  // _onChange () {
-	  //   var waypoints = QueryStore.getWaypoints();
-	  //   // if (this.props.currentRoute.wayPoints.length && !this.props.currentRoute.results.length) {
-	  //   this.queryFourSquare(waypoints);
-	  //   // }
-	  // },
-
-	  render: function render() {
-	    var component = this;
-
-	    if (this.props.currentRoute) {
-	      var listDetails = this.props.currentRoute.filteredVenues.map(function (venue, index) {
-	        return React.createElement(VenueView, { venue: venue, origin: component.props.origin });
-	      });
-
-	      return React.createElement(
-	        'div',
-	        null,
-	        ' ',
-	        listDetails,
-	        ' '
-	      );
-	    } else {
-	      return null;
-	    } //if
-
-	    // var listDetails = this.state.venues.map(function(venue, index) {
-	    //   return (
-	    //     <VenueView venue={venue}/>
-	    //   )
-	    // });
-	  } //render()
-	});
-
-	module.exports = ListView;
-
-/***/ },
-/* 364 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/*
-	This view shows the details of each venue
-	*/
-
-	'use strict';
-
-	var React = __webpack_require__(1);
-
-	/***************
-	****** MUI *****
-	****************/
-	var mui = __webpack_require__(204);
-	var ThemeManager = new mui.Styles.ThemeManager();
-	var Card = mui.Card;
-	var CardHeader = mui.CardHeader;
-	var CardMedia = mui.CardMedia;
-	var CardActions = mui.CardActions;
-	var CardText = mui.CardText;
-	var Avatar = mui.Avatar;
-	var CardTitle = mui.CardTitle;
-
-	var VenueView = React.createClass({
-	  displayName: 'VenueView',
-
-	  propTypes: {
-	    venue: React.PropTypes.object.isRequired
-	  },
-
-	  // openFourSquare: React.PropTypes.func.isRequired
-	  childContextTypes: {
-	    muiTheme: React.PropTypes.object
-	  },
-
-	  getChildContext: function getChildContext() {
-	    return {
-	      muiTheme: ThemeManager.getCurrentTheme()
-	    };
-	  },
-
-	  openFourSquare: function openFourSquare() {
-	    var venue = this.props.venue;
-	    var url = "https://foursquare.com/v/" + escape(venue.name) + "/" + venue.id;
-	    window.open(url);
-	  },
-
-	  openDirections: function openDirections() {
-	    var venue = this.props.venue;
-	    var origin = this.props.origin;
-	    var url = "https://www.google.com/maps/dir/" + origin + "/" + venue.location.lat + "," + venue.location.lng;
-	    console.log(url);
-	    window.open(url);
-	  },
-
-	  render: function render() {
-	    var _props$venue = this.props.venue;
-	    var featuredPhotos = _props$venue.featuredPhotos;
-	    var name = _props$venue.name;
-	    var contact = _props$venue.contact;
-	    var hours = _props$venue.hours;
-	    var categories = _props$venue.categories;
-	    var location = _props$venue.location;
-	    var menu = _props$venue.menu;
-	    var price = _props$venue.price;
-	    var rating = _props$venue.rating;
-	    var ratingColor = _props$venue.ratingColor;
-	    var stats = _props$venue.stats;
-	    var url = _props$venue.url;
-	    var totalDistance = _props$venue.totalDistance;
-
-	    if (categories) {
-	      var categoryList = categories.map(function (category, index) {
-	        return category.shortName;
-	      });
-	    }
-
-	    if (featuredPhotos && featuredPhotos.items && featuredPhotos.items.length) {
-	      var photoUrl = featuredPhotos.items[0].prefix + "100x100" + featuredPhotos.items[0].suffix;
-	    }
-
-	    var avatar = React.createElement(Avatar, {
-	      src: photoUrl ? photoUrl : "https://foursquare.com/img/categories/food/default_64.png",
-	      size: 70 });
-
-	    var msgToDollarSigns = {
-	      Cheap: "$",
-	      Moderate: "$$",
-	      Expensive: "$$$"
-	    };
-
-	    var categoryText = categoryList ? categoryList.join("/") : "N/A";
-	    var priceText = price && price.message ? msgToDollarSigns[price.message] : "N/A";
-	    var ratingText = rating ? rating + '/10' : "N/A";
-	    //var distanceText = Math.round(location.distance/1000*.621*10)/10 + " mi. off the road";
-	    var totalDistanceText = Math.round(totalDistance / 1000 * .621 * 10) / 10 + " mi";
-
-	    return React.createElement(
-	      Card,
-	      { className: 'card' },
-	      React.createElement(
-	        'div',
-	        { className: 'col-xs-2 avatar' },
-	        avatar
-	      ),
-	      React.createElement(
-	        'div',
-	        { className: 'col-xs-7' },
-	        React.createElement(
-	          'span',
-	          { className: 'title' },
-	          ' ',
-	          name,
-	          ' '
-	        ),
-	        React.createElement(
-	          'span',
-	          { className: 'category' },
-	          ' ',
-	          categoryText,
-	          ' '
-	        ),
-	        React.createElement(
-	          'span',
-	          { className: 'address', onClick: this.openDirections },
-	          location.formattedAddress[0] ? location.formattedAddress[0] : null,
-	          ' '
-	        ),
-	        React.createElement(
-	          'span',
-	          { className: hours && hours.status && hours.status.toLowerCase().includes('open') ? 'open' : 'closed' },
-	          ' ',
-	          hours && hours.status ? hours.status : null,
-	          ' '
-	        )
-	      ),
-	      React.createElement(
-	        'div',
-	        { className: 'col-xs-3 detail-info' },
-	        React.createElement(
-	          'span',
-	          { className: 'rating' },
-	          ' ',
-	          '🏆 ' + ratingText,
-	          ' '
-	        ),
-	        React.createElement(
-	          'span',
-	          { className: 'distance' },
-	          ' ',
-	          totalDistanceText,
-	          ' '
-	        ),
-	        React.createElement(
-	          'span',
-	          { className: 'price' },
-	          ' ',
-	          priceText,
-	          ' '
-	        ),
-	        React.createElement(
-	          'span',
-	          { onClick: this.openFourSquare },
-	          React.createElement(
-	            'strong',
-	            null,
-	            'Foursquare'
-	          )
-	        )
-	      )
-	    );
-	  }
-	});
-
-	module.exports = VenueView;
-
-/***/ },
-/* 365 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/*
-	This view returns the tool bar to be shown as part of the MapView
-	*/
-
-	'use strict';
-
-	var React = __webpack_require__(1);
-	var Actions = __webpack_require__(197);
-	/***************
-	****** MUI *****
-	****************/
-	var mui = __webpack_require__(204);
-	var ThemeManager = new mui.Styles.ThemeManager();
-	var Toolbar = mui.Toolbar;
-	var ToolbarGroup = mui.ToolbarGroup;
-	var ToolbarTitle = mui.ToolbarTitle;
-	var ToolbarSeparator = mui.ToolbarSeparator;
-	var DropDownMenu = mui.DropDownMenu;
-	var FontIcon = mui.FontIcon;
-	var RaisedButton = mui.RaisedButton;
-	var DropDownIcon = mui.DropDownIcon;
-
-	var ToolView = React.createClass({
-	  displayName: 'ToolView',
-
-	  // propTypes: {
-
-	  // },
-	  childContextTypes: { // MUI: init
-	    muiTheme: React.PropTypes.object //connect MUI
-	  },
-	  getChildContext: function getChildContext() {
-	    // MUI: set theme
-	    return {
-	      muiTheme: ThemeManager.getCurrentTheme() //set MUI theme to default
-	    };
-	  },
-
-	  render: function render() {
-	    return React.createElement(
-	      'div',
-	      { className: 'container' },
-	      React.createElement(
-	        'button',
-	        { onClick: this.props.loadMore },
-	        'Load More'
-	      ),
-	      React.createElement(
-	        'button',
-	        { onClick: function () {
-	            Actions.priceFilter(1);
-	          } },
-	        '$'
-	      ),
-	      React.createElement(
-	        'button',
-	        { onClick: function () {
-	            Actions.priceFilter(2);
-	          } },
-	        '$$'
-	      ),
-	      React.createElement(
-	        'button',
-	        { onClick: function () {
-	            Actions.priceFilter(3);
-	          } },
-	        '$$$'
-	      ),
-	      React.createElement(
-	        'button',
-	        { onClick: function () {
-	            Actions.ratingFilter(7);
-	          } },
-	        '7+'
-	      ),
-	      React.createElement(
-	        'button',
-	        { onClick: function () {
-	            Actions.ratingFilter(8);
-	          } },
-	        '8+'
-	      ),
-	      React.createElement(
-	        'button',
-	        { onClick: function () {
-	            Actions.ratingFilter(9);
-	          } },
-	        '9+'
-	      ),
-	      React.createElement(
-	        'button',
-	        { onClick: function () {
-	            Actions.clearFilter();
-	          } },
-	        'Clear Filters'
-	      ),
-	      React.createElement(
-	        'button',
-	        { onClick: function () {
-	            Actions.openNowFilter();
-	          } },
-	        'Open Now'
-	      )
-	    );
-	  } //render()
-	}); // toolView
-
-	module.exports = ToolView;
-	/*<button onClick={this.loadMore}>Load More</button>*/ /*<button onClick={function(){Actions.clearData();}}>Clear Data</button>*/
-
-/***/ },
-/* 366 */
 /***/ function(module, exports) {
 
 	// helper function for getDistanceBetweenPoints
@@ -45996,6 +45605,12 @@
 	  return wayPoints;
 	}; //getWayPoints()
 
+	var openFourSquare = function openFourSquare(venue) {
+	  var url = "https://foursquare.com/v/" + escape(venue.name) + "/" + venue.id;
+	  console.log("TEST inside openFourSquare. url=" + url);
+	  window.open(url);
+	};
+
 	module.exports = {
 	  getDistanceBetweenPoints: getDistanceBetweenPoints,
 	  getMiddlePoint: getMiddlePoint,
@@ -46003,187 +45618,48 @@
 	  initializeMap: initializeMap,
 	  initializeMarkers: initializeMarkers,
 	  getWayPoints: getWayPoints,
-	  getSearchRadius: getSearchRadius
+	  getSearchRadius: getSearchRadius,
+	  openFourSquare: openFourSquare
 	};
 
 /***/ },
-/* 367 */
+/* 363 */
 /***/ function(module, exports, __webpack_require__) {
-
-	/* The only store we are going to use, contains information of all routes, attached waypoints, venues, filtered venues, etc... */
 
 	'use strict';
 
 	var AppDispatcher = __webpack_require__(198);
-	var EventEmitter = __webpack_require__(368).EventEmitter;
+	var EventEmitter = __webpack_require__(364).EventEmitter;
 	var Constants = __webpack_require__(202);
-	var assign = __webpack_require__(369);
+	var assign = __webpack_require__(365);
 
 	var CHANGE_EVENT = 'change';
 
-	/********* OUR STORE DATA ***********/
+	var prevVenue = ''; // NOTE: only 1 venue can be active at any time
+	var activeVenue = ''; // NOTE: only 1 venue can be active at any time
 
-	var routes = []; //Stores the last waypoint searched in for that route
-	var currentRoute = 0;
-	var _venueFilters = {
-	  ratingFilter: -1,
-	  priceFilter: -1,
-	  openNowFilter: false
-	};
-
-	/********* OUR ACTION RESPONSE ***********/
-
-	/*** PAYTON ***/
-	function initRoutes(newRoutes) {
-	  // console.log("RouteStore inside initRoutes. routes = ", newRoutes)
-	  routes = newRoutes;
-	  currentRoute = routes[0]; //set default currentRoute to first result
-	} //initRoutes
-
-	function sortVenues() {
-	  currentRoute.filteredVenues.sort(function (a, b) {
-	    return a.totalDistance - b.totalDistance;
-	  });
+	function setActiveVenue(venue_id) {
+	  prevVenue = activeVenue;
+	  activeVenue = venue_id;
 	}
-	function addVenues(venue_wrappers, point) {
-	  //NOTE: point is used for calulating total distance, which is equal to distance of point to origin, plus distance of point to venue
-
-	  // count++;
-	  // var prevResults = newRoute.results || {}; //results is a hash for quick checking
-	  var newResults = {};
-	  var newResultsArr = [];
-	  var allVenues = currentRoute.allVenues;
-
-	  venue_wrappers.forEach(function (venue_wrapper, i) {
-	    var venue = venue_wrapper.venue;
-	    venue.totalDistance = venue.location.distance + point.distance; // in meters
-	    //remove duplicate venues
-	    if (!allVenues[venue.id]) {
-	      // if venue does NOT exist already
-	      // newResults[venue.id] = venue; //save into newResults
-	      allVenues[venue.id] = venue; //save to allVenues
-	    } else {
-	        // if venue is brand new, on
-	        // NOTE: only save if new result is closer to radii than the one from before; THEN: save the new result, get rid of previous; ELSE: don't save new venue
-	        if (allVenues[venue.id].location.distance > venue.location.distance) {
-	          allVenues[venue.id] = venue; //save to allVenues
-	        } //if
-	      } //if
-	  }); //forEach(venues)
-
-	  //NOTE: allVenues has completed update
-	  /***** updated filteredVenues *****/
-	  for (var venue_id in allVenues) {
-	    //convert newResults object into array
-	    newResultsArr.push(newResults[venue_id]); //push value into array
-	  }
-
-	  currentRoute.filteredVenues = getFilteredArr(); //NOTE: get back a filtered and sorted array
-	  // console.log(allVenues);
-	  /**************/
-	} //addVenues()
-
-	function setCurrentRoute(index) {
-	  //First save the old data
-	  //Then find current one and set data to that
-	  currentRoute = routes[index];
-	}
-
-	function getFilteredArr() {
-	  var filteredVenues = [];
-	  var allVenues = currentRoute.allVenues;
-	  // console.log("$$$$$$$$$$$$ getFilteredArr &&&&&& allvenues = ", allVenues)
-	  var ratingFilter = _venueFilters.ratingFilter;
-	  var priceFilter = _venueFilters.priceFilter;
-	  var openNowFilter = _venueFilters.openNowFilter;
-
-	  for (var id in allVenues) {
-	    var venue = allVenues[id];
-	    var valid = true;
-
-	    //Ratings
-	    if (ratingFilter !== -1) {
-	      if (!venue.rating) {
-	        valid = false;
-	      } else if (venue.rating < ratingFilter) {
-	        valid = false;
-	      }
-	    }
-
-	    //Price
-	    if (priceFilter !== -1) {
-	      if (!venue.price) {
-	        valid = false;
-	      } else if (!venue.price.tier) {
-	        valid = false;
-	      } else if (!(venue.price.tier === priceFilter)) {
-	        valid = false;
-	      }
-	    }
-
-	    //Open now filter
-	    if (openNowFilter) {
-	      if (!venue.hours || !venue.hours.isOpen) {
-	        valid = false;
-	      }
-	    }
-
-	    if (valid) {
-	      filteredVenues.push(venue);
-	    }
-	  } //for(allVenues)
-
-	  return filteredVenues;
-	} //getFilteredArr()
-
-	/*** LINUS ***/
-	// function setCurrentRoute (index) {
-	//   currentRoute = index;
-	// }
-
-	// function addWaypoints (waypoints) {
-	//   routeData.push({waypoints: waypoints, index: 1});
-	// }
-
-	/*****************
-	******************
-	*STORE CALLBACKS
-	******************
-	*****************/
 
 	var Store = assign({}, EventEmitter.prototype, {
-	  /* Payton */
-
-	  getRoutes: function getRoutes() {
-	    return routes;
+	  getActiveVenue: function getActiveVenue() {
+	    return activeVenue;
 	  },
 
-	  getCurrentRoute: function getCurrentRoute() {
-	    return currentRoute;
+	  getPrevVenue: function getPrevVenue() {
+	    return prevVenue;
 	  },
-
-	  /* Linus */
-	  // getWaypoints: function(){
-	  //   var temp = routeData[currentRoute].waypoints.slice(routeData[currentRoute].index, 20);
-	  //   routeData[currentRoute].index+=20;
-	  //   console.log(temp, routeData[currentRoute].index);
-	  //   return temp;
-	  // },
 
 	  emitChange: function emitChange() {
 	    this.emit(CHANGE_EVENT);
 	  },
 
-	  /**
-	   * @param {function} callback
-	   */
 	  addChangeListener: function addChangeListener(callback) {
 	    this.on(CHANGE_EVENT, callback);
 	  },
 
-	  /**
-	   * @param {function} callback
-	   */
 	  removeChangeListener: function removeChangeListener(callback) {
 	    this.removeListener(CHANGE_EVENT, callback);
 	  }
@@ -46194,71 +45670,20 @@
 	  var text;
 
 	  switch (action.actionType) {
-	    case Constants.INIT_ROUTES:
-	      // initializes after a new trip is defined
-	      initRoutes(action.newRoutes);
+	    case Constants.SELECT_VENUE:
+	      setActiveVenue(action.venue_id);
 	      Store.emitChange();
-	      break;
 
-	    case Constants.ADD_VENUES:
-	      addVenues(action.results, action.point);
-	      Store.emitChange();
 	      break;
-
-	    case Constants.SELECT_ROUTE:
-	      setCurrentRoute(action.index);
-	      Store.emitChange();
-	      break;
-
-	    case Constants.PRICE_FILTER:
-	      _venueFilters.priceFilter = action.tier;
-	      currentRoute.filteredVenues = getFilteredArr();
-	      sortVenues();
-	      Store.emitChange();
-	      break;
-	    case Constants.RATING_FILTER:
-	      _venueFilters.ratingFilter = action.minRating;
-	      currentRoute.filteredVenues = getFilteredArr();
-	      sortVenues();
-	      Store.emitChange();
-	      break;
-
-	    case Constants.OPEN_NOW_FILTER:
-	      _venueFilters.openNowFilter = !_venueFilters.openNowFilter;
-	      currentRoute.filteredVenues = getFilteredArr();
-	      sortVenues();
-	      Store.emitChange();
-	      break;
-	    case Constants.CLEAR_FILTER:
-	      _venueFilters.openNowFilter = false;
-	      _venueFilters.ratingFilter = -1;
-	      _venueFilters.priceFilter = -1;
-	      currentRoute.filteredVenues = getFilteredArr();
-	      sortVenues();
-	      Store.emitChange();
-	      break;
-	    case Constants.SORT_VENUES:
-	      sortVenues();
-	      Store.emitChange();
-	      break;
-
-	    // case Constants.CLEAR_DATA:
-	    //     routeData = [];
-	    //     currentRoute = 0;
-	    //     break;
-	    // case Constants.ADD_WAYPOINTS:
-	    //     addWaypoints(action.wayPoints);
-	    //     break;
 
 	    default:
-	    // no op
 	  }
 	});
 
 	module.exports = Store;
 
 /***/ },
-/* 368 */
+/* 364 */
 /***/ function(module, exports) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -46565,7 +45990,7 @@
 
 
 /***/ },
-/* 369 */
+/* 365 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -46606,6 +46031,861 @@
 		return to;
 	};
 
+
+/***/ },
+/* 366 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	This view shows the details of the possible routes from origin to destination
+	*/
+
+	'use strict';
+
+	var React = __webpack_require__(1);
+
+	// Import MUI components (material-ui)
+	var mui = __webpack_require__(204);
+	var ThemeManager = new mui.Styles.ThemeManager();
+	var Paper = mui.Paper;
+	var Menu = mui.Menu;
+	var MenuItem = mui.MenuItem;
+	var List = mui.List;
+	var ListItem = mui.ListItem;
+
+	var RouteDetailView = React.createClass({
+	  displayName: 'RouteDetailView',
+
+	  childContextTypes: { // MUI: init
+	    muiTheme: React.PropTypes.object //connect MUI
+	  },
+	  getChildContext: function getChildContext() {
+	    // MUI: set theme
+	    return {
+	      muiTheme: ThemeManager.getCurrentTheme() //set MUI theme to default
+	    };
+	  },
+	  propTypes: {
+	    routes: React.PropTypes.array.isRequired,
+	    changeCurrentRoute: React.PropTypes.func.isRequired
+	  },
+
+	  render: function render() {
+	    var component = this;
+	    var routes = this.props.routes;
+	    var routeDetails = routes.map(function (route, index) {
+	      var colorCodedRouteInfo = React.createElement(
+	        'span',
+	        null,
+	        React.createElement('span', { className: 'glyphicon glyphicon-road', style: { color: route.color } }),
+	        " " + route.distance + " → " + route.duration
+	      );
+	      return React.createElement(ListItem, {
+	        primaryText: colorCodedRouteInfo,
+	        onClick: function () {
+	          component.props.changeCurrentRoute(routes[index]);
+	        },
+	        key: index,
+	        className: 'list-item' });
+	    });
+
+	    return React.createElement(
+	      'div',
+	      null,
+	      React.createElement(
+	        Paper,
+	        null,
+	        React.createElement(
+	          List,
+	          { subheader: 'Route Selector', className: 'route-list' },
+	          ' ',
+	          routeDetails,
+	          ' '
+	        )
+	      )
+	    );
+	  }
+	});
+
+	module.exports = RouteDetailView;
+
+/***/ },
+/* 367 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	ListView: This view shows the details of the possible routes from origin to destination
+	*/
+
+	'use strict';
+
+	var React = __webpack_require__(1);
+	var VenueView = __webpack_require__(368);
+
+	var Actions = __webpack_require__(197);
+	var ListUpdateStore = __webpack_require__(369);
+	// var VenueStore = require('../stores/VenueStore');
+
+	var ListView = React.createClass({
+	  displayName: 'ListView',
+
+	  propTypes: {
+	    currentRoute: React.PropTypes.object.isRequired
+	  },
+
+	  shouldComponentUpdate: function shouldComponentUpdate() {
+	    return false;
+	  },
+	  defaultOptions: {
+	    colors: {
+	      defaultColor: '#FFF',
+	      hoverColor: '#ddd'
+
+	    }
+
+	  },
+
+	  componentDidMount: function componentDidMount() {
+	    // console.log("listView -----> componentDidMount()");
+
+	    /*******  INIT LISTVIEW UX ********/
+	    var _defaultOptions$colors = this.defaultOptions.colors;
+	    var hoverColor = _defaultOptions$colors.hoverColor;
+	    var defaultColor = _defaultOptions$colors.defaultColor;
+
+	    ListUpdateStore.addChangeListener(this.updateList);
+
+	    $(document).on('mouseenter', '.card', function (e) {
+	      $(e.currentTarget).css({ 'background-color': hoverColor });
+
+	      //update map markers to show active venue
+	      var venue_id = $(e.currentTarget).attr('id');
+	      Actions.selectVenue(venue_id);
+	    });
+
+	    $(document).on('mouseleave', '.card', function (e) {
+	      $(e.currentTarget).css({ 'background-color': defaultColor });
+	    });
+
+	    // deactivate marker when mouse leave the list-container
+	    $(document).on('mouseleave', '.list-container', function (e) {
+	      Actions.selectVenue("");
+	    });
+	  }, //componentDidMount()
+
+	  updateList: function updateList() {
+	    this.forceUpdate();
+	  },
+	  render: function render() {
+	    var component = this;
+
+	    if (this.props.currentRoute) {
+	      var listDetails = this.props.currentRoute.filteredVenues.map(function (venue, index) {
+	        return React.createElement(VenueView, { venue: venue, origin: component.props.origin });
+	      });
+
+	      return React.createElement(
+	        'div',
+	        null,
+	        ' ',
+	        listDetails,
+	        ' '
+	      );
+	    } else {
+	      return null;
+	    } //if
+	  } //render()
+	});
+
+	module.exports = ListView;
+
+/***/ },
+/* 368 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	This view shows the details of each venue
+	*/
+
+	'use strict';
+
+	var React = __webpack_require__(1);
+
+	/***************
+	****** MUI *****
+	****************/
+	var mui = __webpack_require__(204);
+	var ThemeManager = new mui.Styles.ThemeManager();
+	var Card = mui.Card;
+	var CardHeader = mui.CardHeader;
+	var CardMedia = mui.CardMedia;
+	var CardActions = mui.CardActions;
+	var CardText = mui.CardText;
+	var Avatar = mui.Avatar;
+	var CardTitle = mui.CardTitle;
+
+	var VenueView = React.createClass({
+	  displayName: 'VenueView',
+
+	  propTypes: {
+	    venue: React.PropTypes.object.isRequired
+	  },
+
+	  // openFourSquare: React.PropTypes.func.isRequired
+	  childContextTypes: {
+	    muiTheme: React.PropTypes.object
+	  },
+
+	  getChildContext: function getChildContext() {
+	    return {
+	      muiTheme: ThemeManager.getCurrentTheme()
+	    };
+	  },
+
+	  openFourSquare: function openFourSquare() {
+	    var venue = this.props.venue;
+	    var url = "https://foursquare.com/v/" + escape(venue.name) + "/" + venue.id;
+	    window.open(url);
+	  },
+
+	  openDirections: function openDirections() {
+	    var venue = this.props.venue;
+	    var origin = this.props.origin;
+	    var url = "https://www.google.com/maps/dir/" + origin + "/" + venue.location.lat + "," + venue.location.lng;
+	    console.log(url);
+	    window.open(url);
+	  },
+
+	  render: function render() {
+	    var _props$venue = this.props.venue;
+	    var featuredPhotos = _props$venue.featuredPhotos;
+	    var name = _props$venue.name;
+	    var contact = _props$venue.contact;
+	    var hours = _props$venue.hours;
+	    var categories = _props$venue.categories;
+	    var location = _props$venue.location;
+	    var menu = _props$venue.menu;
+	    var price = _props$venue.price;
+	    var rating = _props$venue.rating;
+	    var ratingColor = _props$venue.ratingColor;
+	    var stats = _props$venue.stats;
+	    var url = _props$venue.url;
+	    var totalDistance = _props$venue.totalDistance;
+	    var id = _props$venue.id;
+
+	    if (categories) {
+	      var categoryList = categories.map(function (category, index) {
+	        return category.shortName;
+	      });
+	    }
+
+	    if (featuredPhotos && featuredPhotos.items && featuredPhotos.items.length) {
+	      var photoUrl = featuredPhotos.items[0].prefix + "100x100" + featuredPhotos.items[0].suffix;
+	    }
+
+	    var avatar = React.createElement(Avatar, {
+	      src: photoUrl ? photoUrl : "https://foursquare.com/img/categories/food/default_64.png",
+	      size: 70 });
+
+	    var msgToDollarSigns = {
+	      Cheap: "$",
+	      Moderate: "$$",
+	      Expensive: "$$$"
+	    };
+
+	    var categoryText = categoryList ? categoryList.join("/") : "N/A";
+	    var priceText = price && price.message ? msgToDollarSigns[price.message] : "N/A";
+	    var ratingText = rating ? rating + '/10' : "N/A";
+	    //var distanceText = Math.round(location.distance/1000*.621*10)/10 + " mi. off the road";
+	    var totalDistanceText = Math.round(totalDistance / 1000 * .621 * 10) / 10 + " mi";
+
+	    return React.createElement(
+	      Card,
+	      { className: 'card',
+	        id: id
+	        /*        onClick={function(e){console.log("Card clicked ele=", e.target);}}*/
+	        /*        onMouseOver={function(e){$(e.target).css({'background-color': 'pink'})}}*/
+	      },
+	      React.createElement(
+	        'div',
+	        { className: 'col-xs-2 avatar' },
+	        avatar
+	      ),
+	      React.createElement(
+	        'div',
+	        { className: 'col-xs-7' },
+	        React.createElement(
+	          'span',
+	          { className: 'title' },
+	          ' ',
+	          name,
+	          ' '
+	        ),
+	        React.createElement(
+	          'span',
+	          { className: 'category' },
+	          ' ',
+	          categoryText,
+	          ' '
+	        ),
+	        React.createElement(
+	          'span',
+	          { className: 'address', onClick: this.openDirections },
+	          location.formattedAddress[0] ? location.formattedAddress[0] : null,
+	          ' '
+	        ),
+	        React.createElement(
+	          'span',
+	          { className: hours && hours.status && hours.status.toLowerCase().includes('open') ? 'open' : 'closed' },
+	          ' ',
+	          hours && hours.status ? hours.status : null,
+	          ' '
+	        )
+	      ),
+	      React.createElement(
+	        'div',
+	        { className: 'col-xs-3 detail-info' },
+	        React.createElement(
+	          'span',
+	          { className: 'rating' },
+	          ' ',
+	          '🏆 ' + ratingText,
+	          ' '
+	        ),
+	        React.createElement(
+	          'span',
+	          { className: 'distance' },
+	          ' ',
+	          totalDistanceText,
+	          ' '
+	        ),
+	        React.createElement(
+	          'span',
+	          { className: 'price' },
+	          ' ',
+	          priceText,
+	          ' '
+	        ),
+	        React.createElement(
+	          'span',
+	          { onClick: this.openFourSquare },
+	          React.createElement(
+	            'strong',
+	            null,
+	            'Foursquare'
+	          )
+	        )
+	      )
+	    );
+	  }
+	});
+
+	module.exports = VenueView;
+	/*Card*/
+
+/***/ },
+/* 369 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* Saves query information about each route: going to refactor back to overView state -> routes */
+
+	'use strict';
+
+	var AppDispatcher = __webpack_require__(198);
+	var EventEmitter = __webpack_require__(364).EventEmitter;
+	var Constants = __webpack_require__(202);
+	var assign = __webpack_require__(365);
+
+	var CHANGE_EVENT = 'change';
+
+	var routeData = []; //Stores the last waypoint searched in for that route
+	var currentRoute = 0;
+
+	var Store = assign({}, EventEmitter.prototype, {
+
+	  emitChange: function emitChange() {
+	    this.emit(CHANGE_EVENT);
+	  },
+
+	  addChangeListener: function addChangeListener(callback) {
+	    this.on(CHANGE_EVENT, callback);
+	  },
+
+	  /**
+	   * @param {function} callback
+	   */
+	  removeChangeListener: function removeChangeListener(callback) {
+	    this.removeListener(CHANGE_EVENT, callback);
+	  }
+	});
+
+	// Register callback to handle all updates
+	AppDispatcher.register(function (action) {
+	  var text;
+
+	  switch (action.actionType) {
+
+	    case Constants.UPDATE_LIST:
+	      console.log('called');
+	      Store.emitChange();
+	      break;
+
+	    default:
+	    // no op
+	  }
+	});
+
+	module.exports = Store;
+
+/***/ },
+/* 370 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	This view returns the tool bar to be shown as part of the MapView
+	*/
+
+	'use strict';
+
+	var React = __webpack_require__(1);
+	var Actions = __webpack_require__(197);
+
+	var SelectBox = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"../lib/react-select-box/lib/select-box\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
+
+	/***************
+	****** MUI *****
+	****************/
+	var mui = __webpack_require__(204);
+	var ThemeManager = new mui.Styles.ThemeManager();
+	var Toolbar = mui.Toolbar;
+	var ToolbarGroup = mui.ToolbarGroup;
+	var ToolbarTitle = mui.ToolbarTitle;
+	var ToolbarSeparator = mui.ToolbarSeparator;
+	var DropDownMenu = mui.DropDownMenu;
+	var FontIcon = mui.FontIcon;
+	var RaisedButton = mui.RaisedButton;
+	var DropDownIcon = mui.DropDownIcon;
+
+	var ToolView = React.createClass({
+	  displayName: 'ToolView',
+
+	  // propTypes: {
+
+	  // },
+	  childContextTypes: { // MUI: init
+	    muiTheme: React.PropTypes.object //connect MUI
+	  },
+	  getChildContext: function getChildContext() {
+	    // MUI: set theme
+	    return {
+	      muiTheme: ThemeManager.getCurrentTheme() //set MUI theme to default
+	    };
+	  },
+	  // <div className = "container">
+	  //     {/*<button onClick={this.loadMore}>Load More</button>*/}
+	  //     <button onClick={this.props.loadMore}>Load More</button>
+	  //     <button onClick={function(){Actions.priceFilter(1)}}>$</button>
+	  //     <button onClick={function(){Actions.priceFilter(2)}}>$$</button>
+	  //     <button onClick={function(){Actions.priceFilter(3)}}>$$$</button>
+	  //     <button onClick={function(){Actions.ratingFilter(7)}}>7+</button>
+	  //     <button onClick={function(){Actions.ratingFilter(8)}}>8+</button>
+	  //     <button onClick={function(){Actions.ratingFilter(9)}}>9+</button>
+	  //     <button onClick={function(){Actions.clearFilter();}}>Clear Filters</button>
+	  //     <button onClick={function(){Actions.openNowFilter();}}>Open Now</button>
+	  //     {/*<button onClick={function(){Actions.clearData();}}>Clear Data</button>*/}
+
+	  // </div>
+
+	  render: function render() {
+	    return React.createElement(
+	      'div',
+	      { style: { "backgroundColor": 'pink' } },
+	      React.createElement(
+	        SelectBox,
+	        {
+	          label: 'Favorite Color',
+	          className: 'my-example-select-box',
+	          onChange: this.handleChange,
+	          value: this.state.color
+	        },
+	        React.createElement(
+	          'option',
+	          { key: 'red', value: 'red' },
+	          ' Red '
+	        ),
+	        React.createElement(
+	          'option',
+	          { key: 'blue', value: 'blue' },
+	          ' Blue '
+	        ),
+	        React.createElement(
+	          'option',
+	          { key: 'green', value: 'green' },
+	          ' green '
+	        )
+	      ),
+	      React.createElement(
+	        'div',
+	        { className: 'dropdown' },
+	        React.createElement(
+	          'button',
+	          { className: 'btn btn-primary dropdown-toggle', type: 'button', 'data-toggle': 'dropdown' },
+	          'Price',
+	          React.createElement('span', { className: 'caret' })
+	        ),
+	        React.createElement(
+	          'ul',
+	          { className: 'dropdown-menu' },
+	          React.createElement(
+	            'li',
+	            { onClick: function () {
+	                Actions.priceFilter(1);
+	              } },
+	            ' ',
+	            React.createElement(
+	              'a',
+	              null,
+	              'Price: $'
+	            )
+	          ),
+	          React.createElement(
+	            'li',
+	            { onClick: function () {
+	                Actions.priceFilter(2);
+	              } },
+	            React.createElement(
+	              'a',
+	              null,
+	              'Price: $$'
+	            )
+	          ),
+	          React.createElement(
+	            'li',
+	            { onClick: function () {
+	                Actions.priceFilter(3);
+	              } },
+	            React.createElement(
+	              'a',
+	              null,
+	              'Price: $$$'
+	            )
+	          ),
+	          React.createElement(
+	            'li',
+	            { onClick: function () {
+	                Actions.openNowFilter();
+	              } },
+	            React.createElement(
+	              'a',
+	              null,
+	              'Open'
+	            )
+	          )
+	        )
+	      ),
+	      React.createElement(
+	        'div',
+	        { className: 'dropdown' },
+	        React.createElement(
+	          'button',
+	          { className: 'btn btn-primary dropdown-toggle', type: 'button', 'data-toggle': 'dropdown' },
+	          'Rating',
+	          React.createElement('span', { className: 'caret' })
+	        ),
+	        React.createElement(
+	          'ul',
+	          { className: 'dropdown-menu' },
+	          React.createElement(
+	            'li',
+	            { onClick: function () {
+	                Actions.ratingFilter(7);
+	              } },
+	            ' ',
+	            React.createElement(
+	              'a',
+	              null,
+	              '7+ Rating'
+	            )
+	          ),
+	          React.createElement(
+	            'li',
+	            { onClick: function () {
+	                Actions.ratingFilter(8);
+	              } },
+	            React.createElement(
+	              'a',
+	              null,
+	              '8+ Rating'
+	            )
+	          ),
+	          React.createElement(
+	            'li',
+	            { onClick: function () {
+	                Actions.ratingFilter(9);
+	              } },
+	            React.createElement(
+	              'a',
+	              null,
+	              '9+ Rating'
+	            )
+	          )
+	        )
+	      )
+	    );
+	  } //render()
+	}); // toolView
+
+	module.exports = ToolView;
+	/* SelectBox */
+
+/***/ },
+/* 371 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* The only store we are going to use, contains information of all routes, attached waypoints, venues, filtered venues, etc... */
+
+	'use strict';
+
+	var AppDispatcher = __webpack_require__(198);
+	var EventEmitter = __webpack_require__(364).EventEmitter;
+	var Constants = __webpack_require__(202);
+	var assign = __webpack_require__(365);
+
+	var CHANGE_EVENT = 'change';
+
+	/********* OUR STORE DATA ***********/
+
+	var routes = []; //Stores the last waypoint searched in for that route
+	var currentRoute = 0;
+	var _venueFilters = {
+	  ratingFilter: 7,
+	  priceFilter: -1,
+	  openNowFilter: false
+	};
+
+	/********* OUR ACTION RESPONSE ***********/
+
+	/*** PAYTON ***/
+	function initRoutes(newRoutes) {
+	  // console.log("RouteStore inside initRoutes. routes = ", newRoutes)
+	  routes = newRoutes;
+	  currentRoute = routes[0]; //set default currentRoute to first result
+	} //initRoutes
+
+	function sortVenues() {
+	  currentRoute.filteredVenues.sort(function (a, b) {
+	    return a.totalDistance - b.totalDistance;
+	  });
+	}
+	function addVenues(venue_wrappers, point) {
+	  //NOTE: point is used for calulating total distance, which is equal to distance of point to origin, plus distance of point to venue
+
+	  // count++;
+	  // var prevResults = newRoute.results || {}; //results is a hash for quick checking
+	  var newResults = {};
+	  var newResultsArr = [];
+	  var allVenues = currentRoute.allVenues;
+
+	  venue_wrappers.forEach(function (venue_wrapper, i) {
+	    var venue = venue_wrapper.venue;
+	    venue.totalDistance = venue.location.distance + point.distance; // in meters
+	    //remove duplicate venues
+	    if (!allVenues[venue.id]) {
+	      // if venue does NOT exist already
+	      // newResults[venue.id] = venue; //save into newResults
+	      allVenues[venue.id] = venue; //save to allVenues
+	    } else {
+	        // if venue is brand new, on
+	        // NOTE: only save if new result is closer to radii than the one from before; THEN: save the new result, get rid of previous; ELSE: don't save new venue
+	        if (allVenues[venue.id].location.distance > venue.location.distance) {
+	          allVenues[venue.id] = venue; //save to allVenues
+	        } //if
+	      } //if
+	  }); //forEach(venues)
+
+	  //NOTE: allVenues has completed update
+	  /***** updated filteredVenues *****/
+	  for (var venue_id in allVenues) {
+	    //convert newResults object into array
+	    newResultsArr.push(newResults[venue_id]); //push value into array
+	  }
+
+	  currentRoute.filteredVenues = getFilteredArr(); //NOTE: get back a filtered and sorted array
+	} //addVenues()
+
+	function setCurrentRoute(index) {
+	  //First save the old data
+	  //Then find current one and set data to that
+	  currentRoute = routes[index];
+	}
+
+	function getFilteredArr() {
+	  var filteredVenues = [];
+	  var allVenues = currentRoute.allVenues;
+	  // console.log("$$$$$$$$$$$$ getFilteredArr &&&&&& allvenues = ", allVenues)
+	  var ratingFilter = _venueFilters.ratingFilter;
+	  var priceFilter = _venueFilters.priceFilter;
+	  var openNowFilter = _venueFilters.openNowFilter;
+
+	  for (var id in allVenues) {
+	    var venue = allVenues[id];
+	    var valid = true;
+
+	    //Ratings
+	    if (ratingFilter !== -1) {
+	      if (!venue.rating) {
+	        valid = false;
+	      } else if (venue.rating < ratingFilter) {
+	        valid = false;
+	      }
+	    }
+
+	    //Price
+	    if (priceFilter !== -1) {
+	      if (!venue.price) {
+	        valid = false;
+	      } else if (!venue.price.tier) {
+	        valid = false;
+	      } else if (!(venue.price.tier === priceFilter)) {
+	        valid = false;
+	      }
+	    }
+
+	    //Open now filter
+	    if (openNowFilter) {
+	      if (!venue.hours || !venue.hours.isOpen) {
+	        valid = false;
+	      }
+	    }
+
+	    if (valid) {
+	      filteredVenues.push(venue);
+	    }
+	  } //for(allVenues)
+
+	  return filteredVenues;
+	} //getFilteredArr()
+
+	/*** LINUS ***/
+	// function setCurrentRoute (index) {
+	//   currentRoute = index;
+	// }
+
+	// function addWaypoints (waypoints) {
+	//   routeData.push({waypoints: waypoints, index: 1});
+	// }
+
+	/*****************
+	******************
+	*STORE CALLBACKS
+	******************
+	*****************/
+
+	var Store = assign({}, EventEmitter.prototype, {
+	  /* Payton */
+
+	  getRoutes: function getRoutes() {
+	    return routes;
+	  },
+
+	  getCurrentRoute: function getCurrentRoute() {
+	    return currentRoute;
+	  },
+
+	  /* Linus */
+	  // getWaypoints: function(){
+	  //   var temp = routeData[currentRoute].waypoints.slice(routeData[currentRoute].index, 20);
+	  //   routeData[currentRoute].index+=20;
+	  //   console.log(temp, routeData[currentRoute].index);
+	  //   return temp;
+	  // },
+
+	  emitChange: function emitChange() {
+	    this.emit(CHANGE_EVENT);
+	  },
+
+	  /**
+	   * @param {function} callback
+	   */
+	  addChangeListener: function addChangeListener(callback) {
+	    this.on(CHANGE_EVENT, callback);
+	  },
+
+	  /**
+	   * @param {function} callback
+	   */
+	  removeChangeListener: function removeChangeListener(callback) {
+	    this.removeListener(CHANGE_EVENT, callback);
+	  }
+	});
+
+	// Register callback to handle all updates
+	AppDispatcher.register(function (action) {
+	  var text;
+
+	  switch (action.actionType) {
+	    case Constants.INIT_ROUTES:
+	      // initializes after a new trip is defined
+	      initRoutes(action.newRoutes);
+	      Store.emitChange();
+	      break;
+
+	    case Constants.ADD_VENUES:
+	      addVenues(action.results, action.point);
+	      Store.emitChange();
+	      break;
+
+	    case Constants.SELECT_ROUTE:
+	      setCurrentRoute(action.index);
+	      Store.emitChange();
+	      break;
+
+	    case Constants.PRICE_FILTER:
+	      _venueFilters.priceFilter = action.tier;
+	      currentRoute.filteredVenues = getFilteredArr();
+	      sortVenues();
+	      Store.emitChange();
+	      break;
+	    case Constants.RATING_FILTER:
+	      _venueFilters.ratingFilter = action.minRating;
+	      currentRoute.filteredVenues = getFilteredArr();
+	      sortVenues();
+	      Store.emitChange();
+	      break;
+
+	    case Constants.OPEN_NOW_FILTER:
+	      _venueFilters.openNowFilter = !_venueFilters.openNowFilter;
+	      currentRoute.filteredVenues = getFilteredArr();
+	      sortVenues();
+	      Store.emitChange();
+	      break;
+	    case Constants.CLEAR_FILTER:
+	      _venueFilters.openNowFilter = false;
+	      _venueFilters.ratingFilter = 7;
+	      _venueFilters.priceFilter = -1;
+	      currentRoute.filteredVenues = getFilteredArr();
+	      sortVenues();
+	      Store.emitChange();
+	      break;
+	    case Constants.SORT_VENUES:
+	      sortVenues();
+	      Store.emitChange();
+	      break;
+
+	    // case Constants.CLEAR_DATA:
+	    //     routeData = [];
+	    //     currentRoute = 0;
+	    //     break;
+	    // case Constants.ADD_WAYPOINTS:
+	    //     addWaypoints(action.wayPoints);
+	    //     break;
+
+	    default:
+	    // no op
+	  }
+	});
+
+	module.exports = Store;
 
 /***/ }
 /******/ ]);

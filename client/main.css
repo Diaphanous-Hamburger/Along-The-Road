@@ -241,6 +241,10 @@ then you get 114 height on the title
 ******* ListView *******
 ***********************
 ***********************/
+  .react-select-box-container{
+    width: 140px; 
+    margin: 7px 30px;
+  }
 
 
 

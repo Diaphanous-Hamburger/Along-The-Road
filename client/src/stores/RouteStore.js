@@ -11,12 +11,16 @@ var CHANGE_EVENT = 'change';
 
 var routes = []; //Stores the last waypoint searched in for that route
 var currentRoute = 0;
-var _venueFilters = {
-  ratingFilter: 7, 
-  priceFilter: -1,  
+var venueFilters = {
+  ratingFilter: 7, //default to seven and above
+  // priceFilter: -1,  
+  price1: false, 
+  price2: false,
+  price3: false,
   openNowFilter: false
 };
 
+// var venueFilters = {}
 
 /********* OUR ACTION RESPONSE ***********/
 
@@ -78,7 +82,7 @@ function getFilteredArr () {
   var filteredVenues = [];
   var allVenues = currentRoute.allVenues;
   // console.log("$$$$$$$$$$$$ getFilteredArr &&&&&& allvenues = ", allVenues)
-  var {ratingFilter, priceFilter, openNowFilter} = _venueFilters;
+  var {ratingFilter, price1, price2, price3, openNowFilter} = venueFilters;
 
   for(var id in allVenues){
     var venue = allVenues[id];
@@ -93,16 +97,28 @@ function getFilteredArr () {
       }
     }
 
-    //Price
-    if(priceFilter !== -1){
-      if(!venue.price) {
+    // show all if all price filters are false
+    if(price1 || price2 || price3){
+      if(venue.price.tier === 1  && !price1){
         valid = false;
-      } else if (!(venue.price.tier)){
+        
+      }else if(venue.price.tier === 2  && !price2){
         valid = false;
-      } else if (!(venue.price.tier === priceFilter) ){
+
+      }else if(venue.price.tier === 3  && !price3){
         valid = false;
       }
     }
+    // if(priceFilter !== -1){
+    //   if(!venue.price) { //if no price rating return false
+    //     valid = false;
+    //   } else if (!(venue.price.tier)){ //
+    //     valid = false;
+    //   } else if (!(venue.price.tier === priceFilter) ){
+    //     valid = false;
+    //   }
+    // }
+
 
     //Open now filter
     if(openNowFilter){
@@ -227,6 +243,13 @@ AppDispatcher.register(function(action) {
       sortVenues();
       Store.emitChange();
       break;
+    // case Constants.UPDATE_VENUE_FILTERS:
+    //   // updateFilters(action.venueFilters)
+    //   currentRoute.filteredVenues = action.venueFilters;
+    //   sortVenues();
+    //   Store.emitChange();
+      
+    //   break;
 
 
     // case Constants.CLEAR_DATA:

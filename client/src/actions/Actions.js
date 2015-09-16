@@ -34,6 +34,13 @@ var Actions = {
     });
   },
 
+  // updateVenueFilters: function(filterObj){
+  //   AppDispatcher.dispatch({
+  //     actionType: Constants.UPDATE_VENUE_FILTERS,
+  //     filterObj: filterObj
+  //   });
+  // },
+
   priceFilter: function(tier){
     AppDispatcher.dispatch({
       actionType: Constants.PRICE_FILTER,

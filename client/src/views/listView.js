@@ -20,6 +20,7 @@ var ListView = React.createClass({
   shouldComponentUpdate () {
     return false;
   },
+  
   defaultOptions: {
     colors: {
       defaultColor: '#FFF',

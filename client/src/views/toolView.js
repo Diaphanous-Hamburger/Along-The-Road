@@ -3,7 +3,13 @@ This view returns the tool bar to be shown as part of the MapView
 */
 
 var React = require('react');
-var Actions = require('../actions/Actions')
+
+/**** FLUX ****/
+var Actions = require('../actions/Actions');
+var RouteStore = require('../stores/RouteStore');
+
+var SelectBox = require('../../lib/react-select-box/lib/select-box');
+
 /***************
 ****** MUI *****
 ****************/
@@ -13,17 +19,27 @@ var {Toolbar, ToolbarGroup, ToolbarTitle, ToolbarSeparator, DropDownMenu, FontIc
 
 
 var ToolView = React.createClass({
-  // propTypes: {
+  propTypes: {
+    // venueFilters: React.PropTypes.object.isRequired
+  },
 
-  // },
   childContextTypes: { // MUI: init
     muiTheme: React.PropTypes.object //connect MUI
   },
+
   getChildContext () { // MUI: set theme
     return {
       muiTheme: ThemeManager.getCurrentTheme() //set MUI theme to default
     };
   },
+
+  getInitialState (){
+    return {
+      // venuefilters: []
+      colors: []
+    }
+  },
+
       // <div className = "container">
       //     {/*<button onClick={this.loadMore}>Load More</button>*/}
       //     <button onClick={this.props.loadMore}>Load More</button>
@@ -39,10 +55,27 @@ var ToolView = React.createClass({
 
 
       // </div>
+  updateFilters: function (colors) {
+    // Actions.updateVenueFilters();
+    this.setState({ colors: colors });
+  },
 
   render () {
     return (
       <div style={{"backgroundColor": 'pink'}}>
+        <SelectBox
+            label = "By Price"
+            className = ''
+            onChange = {this.updateFilters}
+            value = {this.state.filters}
+            multiple = {true}
+        >{/* SelectBox */}
+          <option onClick={function(){Actions.priceFilter(1)}} key='red' value='price1'> $ </option>
+          <option onClick={function(){Actions.priceFilter(2)}} key='blue' value='price2'> $$ </option>
+          <option onClick={function(){Actions.priceFilter(3)}} key='green' value='price3'> $$$ </option>
+          
+        </SelectBox>
+
         <div className="dropdown">
           <button className="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">
           Price
