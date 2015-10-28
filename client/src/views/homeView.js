@@ -133,8 +133,8 @@ var HomeView = React.createClass({
 
             <div className = 'row'>
               <div className = 'col-sm-12 text-center'>
-                <a href="http://foodenroute.strikingly.com">
-                  <img className="app-store" src="http://res.cloudinary.com/hrscywv4p/image/upload/c_limit,f_auto,h_3000,q_90,w_1200/v1/627066/coming-soon1_icy2uw_jbueob.png"/>
+                <a href="https://itunes.apple.com/us/app/food-en-route/id1042386985?mt=8">
+                  <img className="app-store" src="https://www3.iconcerts.com/images/new-images/app-icons/en/available_apple.png"/>
                 </a>
               </div> {/* col */}
             </div> {/* row */}

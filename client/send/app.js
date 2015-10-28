@@ -46770,7 +46770,7 @@
 	  render: function render() {
 	    return React.createElement(
 	      'div',
-	      { style: { "backgroundColor": 'blue' } },
+	      { style: { "backgroundColor": '#555' } },
 	      React.createElement('input', { id: 'searchBar', placeholder: 'Keyword Search', className: 'filter-input form-control' }),
 	      React.createElement(
 	        SelectBox,
